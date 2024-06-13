@@ -74,7 +74,6 @@ export const buscarParqueaderos = async (req, res) => {
 
 export const editarParqueadero = async (req, res) => {
 
-    console.log("entro")
     const { id } = req.params;
     const { nombre, capacidad, costo_hora, socio_id } = req.body; 
     try {

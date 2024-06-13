@@ -18,22 +18,22 @@ CREATE TABLE Parqueaderos (
     socio_id INT REFERENCES Usuarios(id)
 );
 
-CREATE TABLE Vehículos (
+CREATE TABLE Vehiculos (
     id SERIAL PRIMARY KEY,
     placa VARCHAR(6) UNIQUE NOT NULL
 );
 
-CREATE TABLE HistorialVehículos (
+CREATE TABLE HistorialVehiculos (
     id SERIAL PRIMARY KEY,
-    vehiculo_id INT REFERENCES Vehículos(id),
+    vehiculo_id INT REFERENCES Vehiculos(id),
     parqueadero_id INT REFERENCES Parqueaderos(id),
     fecha_ingreso TIMESTAMP NOT NULL,
     fecha_salida TIMESTAMP NOT NULL
 );
 
-CREATE TABLE IngresosVehículos (
+CREATE TABLE IngresosVehiculos (
     id SERIAL PRIMARY KEY,
-    vehiculo_id INT REFERENCES Vehículos(id),
+    vehiculo_id INT REFERENCES Vehiculos(id),
     parqueadero_id INT REFERENCES Parqueaderos(id),
     fecha_ingreso TIMESTAMP NOT NULL
 );
