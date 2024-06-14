@@ -46,3 +46,17 @@ CREATE TABLE EmailsEnviados (
     parqueadero_nombre VARCHAR(255) NOT NULL,
     fecha_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE EntradasParqueadero (
+    id SERIAL PRIMARY KEY,
+    vehiculo_id INT REFERENCES Vehiculos(id),
+    parqueadero_id INT REFERENCES Parqueaderos(id),
+    cantidad_entradas INT DEFAULT 0,
+    UNIQUE (parqueadero_id, vehiculo_id)
+);
+
+CREATE TABLE EntradasVehiculo (
+    id SERIAL PRIMARY KEY,
+    placa VARCHAR(20) UNIQUE,
+    cantidad_entradas INT DEFAULT 0
+);

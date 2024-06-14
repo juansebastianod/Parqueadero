@@ -17,6 +17,7 @@ router.post('/login', login)
 router.post('/logout', logout)
 router.post('/register',authRequired,authorizeAdmin, register);
 router.post('/parqueadero',authRequired,authorizeAdmin, registerParqueadero);
+router.get('/parqueadero/:nombre',buscarParqueaderos)
 router.put('/parqueadero/:id',authRequired,authorizeAdmin, editarParqueadero)
 router.delete('/parqueadero/:id',authRequired,authorizeAdmin, eliminarParqueadero)
 router.post('/logout',)

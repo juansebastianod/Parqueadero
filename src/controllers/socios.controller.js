@@ -4,16 +4,18 @@ import { pool } from "../db.js";
 export const registrarIngresoVehiculo = async (req, res) => {
     const { placa, parqueaderoId } = req.body;
     try {
+       
         const consultarCapacidadQuery = `
-        SELECT capacidad FROM Parqueaderos WHERE id = $1
-       `;
+            SELECT capacidad FROM Parqueaderos WHERE id = $1
+        `;
         const consultarCapacidadValues = [parqueaderoId];
-        const { rows  } = await pool.query(consultarCapacidadQuery, consultarCapacidadValues);
-        // Verificar si se encontró el parqueadero
-        if (rows[0].capacidad == 0) {
+        const { rows: capacidadRows } = await pool.query(consultarCapacidadQuery, consultarCapacidadValues);
+
+        if (capacidadRows[0].capacidad == 0) {
             return res.status(404).json({ message: "Parqueadero lleno" });
-        } 
-        ///
+        }
+
+        // Verificar si el vehículo ya está registrado
         const verificarVehiculoQuery = `
             SELECT id FROM Vehiculos WHERE placa = $1
         `;
@@ -30,29 +32,43 @@ export const registrarIngresoVehiculo = async (req, res) => {
                 RETURNING id
             `;
             const insertarVehiculoValues = [placa];
-
-            const { rows } = await pool.query(insertarVehiculoQuery, insertarVehiculoValues);
-            vehiculoId = rows[0].id;
+            const { rows: nuevoVehiculoRows } = await pool.query(insertarVehiculoQuery, insertarVehiculoValues);
+            vehiculoId = nuevoVehiculoRows[0].id;
         }
 
-
+        // Registrar el ingreso del vehículo
         const registrarIngresoQuery = `
             INSERT INTO IngresosVehiculos (vehiculo_id, parqueadero_id, fecha_ingreso)
             VALUES ($1, $2, NOW())
             RETURNING id
         `;
         const registrarIngresoValues = [vehiculoId, parqueaderoId];
-        const { rows: ingresoVehiculo } = await pool.query(registrarIngresoQuery, registrarIngresoValues);
+        const { rows: ingresoVehiculoRows } = await pool.query(registrarIngresoQuery, registrarIngresoValues);
 
+        // Disminuir la capacidad del parqueadero
         const disminuirCapacidadQuery = `
             UPDATE Parqueaderos SET capacidad = capacidad - 1 WHERE id = $1
         `;
-
-        //Disminuir la capacidad del parquedero
         const disminuirCapacidadValues = [parqueaderoId];
         await pool.query(disminuirCapacidadQuery, disminuirCapacidadValues);
 
-        res.status(201).json({ id: ingresoVehiculo[0].id });
+        // Actualizar la tabla EntradasParqueadero
+        const actualizarEntradasParqueaderoQuery = `
+            INSERT INTO EntradasParqueadero (parqueadero_id, vehiculo_id, cantidad_entradas)
+            VALUES ($1, $2, 1)
+            ON CONFLICT (parqueadero_id, vehiculo_id) DO UPDATE SET cantidad_entradas = EntradasParqueadero.cantidad_entradas + 1
+        `;
+        await pool.query(actualizarEntradasParqueaderoQuery, [parqueaderoId, vehiculoId]);
+
+        // Actualizar la tabla EntradasVehiculo
+        const actualizarEntradasVehiculoQuery = `
+            INSERT INTO EntradasVehiculo (placa, cantidad_entradas)
+            VALUES ($1, 1)
+            ON CONFLICT (placa) DO UPDATE SET cantidad_entradas = EntradasVehiculo.cantidad_entradas + 1
+        `;
+        await pool.query(actualizarEntradasVehiculoQuery, [placa]);
+
+        res.status(201).json({ id: ingresoVehiculoRows[0].id });
     } catch (error) {
         console.error("Error al registrar ingreso de vehículo:", error.message);
         return res.status(500).json({ message: "Error interno al registrar ingreso de vehículo" });
