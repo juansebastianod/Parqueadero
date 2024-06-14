@@ -104,3 +104,46 @@ export const registrarSalidaVehiculo = async (req, res) => {
     }
 };
 
+export const listParqueadero = async (req, res) => {
+    const socioId = req.user.id; // Obtengo el id del usuario logueado
+
+    try {
+        const query = `
+            SELECT * FROM Parqueaderos
+            WHERE socio_id = $1
+        `;
+        const { rows } = await pool.query(query, [socioId]);
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'No se encontraron parqueaderos para este usuario' });
+        }
+        
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error('Error al listar parqueaderos:', error.message);
+        return res.status(500).json({ message: 'Error interno al listar parqueaderos' });
+    }
+};
+
+export const detalleVehiculo = async (req, res) => {
+    try {
+        const { id } = req.params; // id del parqueadero
+        const query = `
+            SELECT v.id, v.placa, iv.fecha_ingreso
+            FROM Vehiculos v
+            INNER JOIN IngresosVehiculos iv ON v.id = iv.vehiculo_id
+            WHERE iv.parqueadero_id = $1 AND iv.fecha_salida IS NULL
+        `;
+        const { rows } = await pool.query(query, [id]);
+
+        // existen vehiculos 
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'No se encontraron vehículos en este parqueadero o todos han salido' });
+        }
+
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error('Error al obtener detalles de vehículos:', error.message);
+        return res.status(500).json({ message: 'Error interno al obtener detalles de vehículos' });
+    }
+};
+
