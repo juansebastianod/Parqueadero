@@ -71,8 +71,8 @@ export const registrarSalidaVehiculo = async (req, res) => {
         `;
         const verificarVehiculoValues = [placa, parqueaderoId];
         const { rows: vehiculosEncontrados } = await pool.query(verificarVehiculoQuery, verificarVehiculoValues);
-        
-        console.log(vehiculosEncontrados)
+
+        //console.log(vehiculosEncontrados)
         if (vehiculosEncontrados.length === 0) {
             return res.status(400).json({ message: "No se puede registrar salida, no existe la placa en el parqueadero" });
         }
@@ -103,3 +103,4 @@ export const registrarSalidaVehiculo = async (req, res) => {
         return res.status(500).json({ message: "Error interno al registrar salida de vehículo" });
     }
 };
+

@@ -1,5 +1,7 @@
 import { pool } from "../db.js";
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcryptjs';
+import  jwt from 'jsonwebtoken'
+import { tokenAcceso } from '../lib/jwt.js';
 
 export const register = async(req,res)=> {
     const {password,email}=req.body
@@ -26,6 +28,62 @@ export const register = async(req,res)=> {
         return res.status(500).json({message:error.message})
     } 
 }
+
+export const login = async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const query = `
+            SELECT id, email, password, role_id
+            FROM Usuarios
+            WHERE email = $1
+        `;
+        const { rows } = await pool.query(query, [email]);
+
+        if (rows.length === 0) {
+            return res.status(400).json({ message: 'Usuario no encontrado' });
+        }
+
+        const userFound = rows[0];
+
+        const isMatch = await bcrypt.compare(password, userFound.password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Contraseña incorrecta' });
+        }
+
+        // Generar token con id del usuario y rol
+        const payload = {
+            id: userFound.id,
+            role: userFound.role_id // Suponiendo que role_id es el campo que contiene el rol del usuario
+        };
+
+        const token = await tokenAcceso(payload);
+
+        // Setear el token en una cookie o en la respuesta JSON
+        res.cookie('token', token);
+
+        res.json({
+            id: userFound.id,
+            email: userFound.email,
+        });
+    } catch (error) {
+        console.error('Error en login:', error.message);
+        return res.status(500).json({ message: 'Error interno al iniciar sesión' });
+    }
+};
+
+export const logout =(req,res)=>{
+    try {
+        res.cookie('token',"",{
+            expires: new Date(0)
+        })
+        return res.sendStatus(200);
+    } catch (error) {
+        console.log(error)
+    }
+ }
+
 
 export const registerParqueadero = async(req,res)=> {
     const {nombre,capacidad,costo_hora,socio_id}=req.body
@@ -54,7 +112,6 @@ export const buscarParqueaderos = async (req, res) => {
         
         const { nombre } = req.params;
 
-        console.log(nombre)
         let query = `
             SELECT *
             FROM Parqueaderos

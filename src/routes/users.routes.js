@@ -1,11 +1,23 @@
-import {Router} from 'express';
-import {register,registerParqueadero,buscarParqueaderos,editarParqueadero,eliminarParqueadero} from "../controllers/users.controller.js";
-const router =Router();
+import { Router } from 'express';
+import {
+    register,
+    registerParqueadero,
+    buscarParqueaderos,
+    editarParqueadero,
+    eliminarParqueadero,
+    login,
+    logout
+} from "../controllers/users.controller.js";
+import { authRequired } from '../middlewares/validateToken.js';
+import {authorizeAdmin} from '../middlewares/authorization.js'
+const router = Router();
 
-router.post('/register',register);
-router.post('/parqueadero',registerParqueadero);
-router.get('/parqueadero/:nombre',buscarParqueaderos)
-router.put('/parqueadero/:id',editarParqueadero)
-router.delete('/parqueadero/:id',eliminarParqueadero)
+
+router.post('/login', login)
+router.post('/logout', logout)
+router.post('/register',authRequired,authorizeAdmin, register);
+router.post('/parqueadero',authRequired,authorizeAdmin, registerParqueadero);
+router.put('/parqueadero/:id',authRequired,authorizeAdmin, editarParqueadero)
+router.delete('/parqueadero/:id',authRequired,authorizeAdmin, eliminarParqueadero)
 router.post('/logout',)
 export default router;
