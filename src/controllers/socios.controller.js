@@ -62,9 +62,9 @@ export const registrarIngresoVehiculo = async (req, res) => {
 export const registrarSalidaVehiculo = async (req, res) => {
     const { placa, parqueaderoId } = req.body;
     try {
-        // Verificar si el vehículo está registrado en el parqueadero
+        //Verifico que el vehiculo existe en el parqueadero
         const verificarVehiculoQuery = `
-            SELECT iv.id AS ingreso_id, v.id AS vehiculo_id 
+            SELECT iv.id AS ingreso_id, v.id AS vehiculo_id, iv.fecha_ingreso
             FROM Vehiculos v
             JOIN IngresosVehiculos iv ON v.id = iv.vehiculo_id
             WHERE v.placa = $1 AND iv.parqueadero_id = $2 AND iv.fecha_salida IS NULL
@@ -72,32 +72,63 @@ export const registrarSalidaVehiculo = async (req, res) => {
         const verificarVehiculoValues = [placa, parqueaderoId];
         const { rows: vehiculosEncontrados } = await pool.query(verificarVehiculoQuery, verificarVehiculoValues);
 
-        //console.log(vehiculosEncontrados)
         if (vehiculosEncontrados.length === 0) {
             return res.status(400).json({ message: "No se puede registrar salida, no existe la placa en el parqueadero" });
         }
 
-       // const vehiculoId = vehiculosEncontrados[0].vehiculo_id;
         const ingresoId = vehiculosEncontrados[0].ingreso_id;
+        const fechaIngreso = vehiculosEncontrados[0].fecha_ingreso;
 
-        // registrar la fecha de salida en la tabla IngresosVehiculos
+        // registrar salida
         const registrarSalidaQuery = `
             UPDATE IngresosVehiculos
             SET fecha_salida = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING fecha_ingreso, fecha_salida
         `;
         const registrarSalidaValues = [ingresoId];
         const { rows: salidaVehiculo } = await pool.query(registrarSalidaQuery, registrarSalidaValues);
-    
-        // aumentar la capacidad del parqueadero
+
+        if (salidaVehiculo.length === 0) {
+            return res.status(400).json({ message: "Error al registrar salida del vehículo" });
+        }
+
+        const { fecha_ingreso, fecha_salida } = salidaVehiculo[0];
+
+        // Calcular la duración en horas y fracción de horas
+        const duracionHoras = (fecha_salida - fecha_ingreso) / (1000 * 60 * 60); // Convertir diferencia a horas
+
+        //Obtener el costo por hora del parqueadero
+        const obtenerCostoHoraQuery = `
+            SELECT costo_hora FROM Parqueaderos WHERE id = $1
+        `;
+        const obtenerCostoHoraValues = [parqueaderoId];
+        const { rows: parqueadero } = await pool.query(obtenerCostoHoraQuery, obtenerCostoHoraValues);
+
+        if (parqueadero.length === 0) {
+            return res.status(400).json({ message: "No se encontró el parqueadero" });
+        }
+
+        const costoHora = parqueadero[0].costo_hora;
+
+        // Calcular las ganancias
+        const ganancias = duracionHoras * costoHora;
+
+        // Insertar el registro en la tabla HistorialVehiculos
+        const insertarHistorialQuery = `
+            INSERT INTO HistorialVehiculos (vehiculo_id, parqueadero_id, fecha_ingreso, fecha_salida, pago)
+            VALUES ($1, $2, $3, $4, $5)
+        `;
+        const insertarHistorialValues = [vehiculosEncontrados[0].vehiculo_id, parqueaderoId, fechaIngreso, fecha_salida, ganancias];
+        await pool.query(insertarHistorialQuery, insertarHistorialValues);
+
+        // Aumentar la capacidad del parqueadero
         const aumentarCapacidadQuery = `
             UPDATE Parqueaderos SET capacidad = capacidad + 1 WHERE id = $1
         `;
-        const aumentarCapacidadValues = [parqueaderoId];
-        await pool.query(aumentarCapacidadQuery, aumentarCapacidadValues);
+        await pool.query(aumentarCapacidadQuery, [parqueaderoId]);
 
-        res.status(200).json({ message: "Salida registrada" });
+        res.status(200).json({ message: "Salida registrada correctamente", ganancias });
     } catch (error) {
         console.error("Error al registrar salida de vehículo:", error.message);
         return res.status(500).json({ message: "Error interno al registrar salida de vehículo" });
