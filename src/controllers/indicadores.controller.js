@@ -89,10 +89,10 @@ export const obtenerTopVehiculosRegistrados = async (req, res) => {
 };
 
 export const obtenerVehiculosMasRegistrados = async (req, res) => {
-    const { id } = req.params; // Obtener el parámetro de ID de parqueadero desde la solicitud
+    const { id } = req.params;
 
     try {
-        // Consulta SQL para obtener los 10 vehículos más registrados en un parqueadero
+        
         const query = `
             SELECT vehiculo_id, cantidad_entradas
             FROM EntradasParqueadero
@@ -100,12 +100,42 @@ export const obtenerVehiculosMasRegistrados = async (req, res) => {
             ORDER BY cantidad_entradas DESC
             LIMIT 10
         `;
-
         const { rows } = await pool.query(query, [id]);
-
-        res.status(200).json(rows); // Devolver los resultados como JSON al cliente
+        res.status(200).json(rows); 
     } catch (error) {
         console.error('Error al obtener vehículos más registrados:', error.message);
         res.status(500).json({ message: 'Error interno al obtener vehículos más registrados' });
+    }
+};
+
+export const primeraVezParqueadero = async (req, res) => {
+    try {
+        const { id: parqueaderoId } = req.params;
+        const primeraVezParqueaderoQuery = `
+            SELECT vehiculo_id, cantidad_entradas
+            FROM EntradasParqueadero
+            WHERE parqueadero_id = $1
+            ORDER BY cantidad_entradas DESC
+        `;
+        const { rows: vehiculos } = await pool.query(primeraVezParqueaderoQuery, [parqueaderoId]);
+
+        // Crear una lista de vehículos que ingresan por primera vez
+        const vehiculosPrimeraVez = vehiculos.filter(v => v.cantidad_entradas === 1).map(v => v.vehiculo_id);
+
+        // Consulta para obtener las placas de los vehículos que ingresan por primera vez
+        const placasQuery = `
+            SELECT id, placa
+            FROM Vehiculos
+            WHERE id = ANY($1::int[])
+        `;
+        const { rows: placas } = await pool.query(placasQuery, [vehiculosPrimeraVez]);
+
+        res.status(200).json({
+            parqueaderoId,
+            primeraVez: placas
+        });
+    } catch (error) {
+        console.error("Error al verificar la primera vez en el parqueadero:", error.message);
+        return res.status(500).json({ message: "Error interno al verificar la primera vez en el parqueadero" });
     }
 };
