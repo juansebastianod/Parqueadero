@@ -2,10 +2,38 @@ import { pool } from "../db.js";
 import bcrypt from 'bcryptjs';
 import  jwt from 'jsonwebtoken'
 import { tokenAcceso } from '../lib/jwt.js';
+import {Usuario} from '../services/Entity/userEntity.js';
+import { Parqueadero } from "../services/Entity/parqueaderoEntity.js";
+import {
+    registerServis,
+    loginServices
+} from '../services/adminServices.js'
+import {
+    buscarParqueaderosServices,
+    registerParqueaderoServices,
+} from '../services/parqueaderoServices.js'
 
+
+// Terminado
 export const register = async(req,res)=> {
     const {password,email}=req.body
+    const passwordHast =await bcrypt.hash(password,10)
     const roleId = 2;
+
+    let user =new Usuario(roleId,email,passwordHast)
+    const response=await registerServis(user);
+    
+    res.status(response.status).json({
+        message:response.message
+    });
+ 
+   
+}
+
+//Esto lo hice para registrar un admin rapidamente
+export const registerAdmin = async(req,res)=> {
+    const {password,email}=req.body
+    const roleId = 1;
     try {
         const passwordHast =await bcrypt.hash(password,10)
         const query = `
@@ -28,51 +56,18 @@ export const register = async(req,res)=> {
         return res.status(500).json({message:error.message})
     } 
 }
-
+//Terminado
 export const login = async (req, res) => {
     const { email, password } = req.body;
-
-    try {
-        const query = `
-            SELECT id, email, password, role_id
-            FROM Usuarios
-            WHERE email = $1
-        `;
-        const { rows } = await pool.query(query, [email]);
-
-        if (rows.length === 0) {
-            return res.status(400).json({ message: 'Usuario no encontrado' });
-        }
-
-        const userFound = rows[0];
-
-        const isMatch = await bcrypt.compare(password, userFound.password);
-
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Contraseña incorrecta' });
-        }
-
-        // Generar token con id del usuario y rol
-        const payload = {
-            id: userFound.id,
-            role: userFound.role_id // Suponiendo que role_id es el campo que contiene el rol del usuario
-        };
-
-        const token = await tokenAcceso(payload);
-
-        // Setear el token en una cookie o en la respuesta JSON
-        res.cookie('token', token);
-
-        res.json({
-            id: userFound.id,
-            email: userFound.email,
-        });
-    } catch (error) {
-        console.error('Error en login:', error.message);
-        return res.status(500).json({ message: 'Error interno al iniciar sesión' });
-    }
+    const response=await loginServices(email,password);
+    res.cookie('token', response.token);
+    res.status(response.status).json({
+        message:response.message,
+    });
+    
 };
 
+//Terminado
 export const logout =(req,res)=>{
     try {
         res.cookie('token',"",{
@@ -84,50 +79,30 @@ export const logout =(req,res)=>{
     }
  }
 
-
+ //Terminado 
 export const registerParqueadero = async(req,res)=> {
     const {nombre,capacidad,costo_hora,socio_id}=req.body
-    try {
-        const query = `
-            INSERT INTO Parqueaderos (nombre, capacidad, costo_hora, socio_id)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id
-        `;
-        const values = [nombre, capacidad, costo_hora, socio_id];
 
-        const { rows } = await pool.query(query, values);
-        if (rows.length > 0) {
-            res.status(201).json({ message: "Parqueadero registrado exitosamente", parqueaderoId: rows[0].id });
-        } else {
-            throw new Error("No se pudo registrar el parqueadero");
-        }
-    } catch (error) {
-        console.error("Error al registrar parqueadero:", error.message);
-        return res.status(500).json({ message: "Error interno al registrar el parqueadero" });
-    }
+    const parqueadero =new  Parqueadero(nombre,capacidad,costo_hora,socio_id);
+    const response= await registerParqueaderoServices (parqueadero);
+    
+    res.status(response.status).json({
+        message:response.message
+    });
+ 
 }
 
-export const buscarParqueaderos = async (req, res) => {
-    try {
-        
-        const { nombre } = req.params;
 
-        let query = `
-            SELECT *
-            FROM Parqueaderos
-        `;
-        let params = [];
-        if (nombre) {
-            query += ` WHERE nombre ILIKE $1`;
-            params.push(`%${nombre}%`);
-        }
-        const { rows } = await pool.query(query, params);
-        res.json(rows);
-    } catch (error) {
-        console.error("Error al buscar parqueaderos:", error.message);
-        return res.status(500).json({ message: "Error interno al buscar parqueaderos" });
-    }
-};
+//Terminado
+export const buscarParqueaderos = async (req, res) => {
+    
+    const { nombre } = req.body;
+    const response=await buscarParqueaderosServices(nombre);
+    res.status(response.status).json({
+        message:response.message,
+        data:response.data,
+    });
+}
 
 export const editarParqueadero = async (req, res) => {
 

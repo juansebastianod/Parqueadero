@@ -23,7 +23,7 @@ export const authRequired = async (req, res, next) => {
             const { rows } = await pool.query(query, [id]);
 
             if (rows.length === 0) {
-                return res.status(401).json({ message: 'Usuario no encontrado' });
+                return res.status(401).json({ message: 'Usuario no autorizado' });
             }
 
             // Añadir el usuario y su rol a la solicitud para su uso posterior

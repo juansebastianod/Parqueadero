@@ -1,3 +1,9 @@
+--Crear base de datos 
+
+CREATE DATABASE parqueadero;
+
+--Tablas de las base de datos 
+
 CREATE TABLE Roles (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL
@@ -28,14 +34,16 @@ CREATE TABLE HistorialVehiculos (
     vehiculo_id INT REFERENCES Vehiculos(id),
     parqueadero_id INT REFERENCES Parqueaderos(id),
     fecha_ingreso TIMESTAMP NOT NULL,
-    fecha_salida TIMESTAMP NOT NULL
+    fecha_salida TIMESTAMP,
+    pago DECIMAL(10, 2) DEFAULT 0
 );
 
 CREATE TABLE IngresosVehiculos (
     id SERIAL PRIMARY KEY,
     vehiculo_id INT REFERENCES Vehiculos(id),
     parqueadero_id INT REFERENCES Parqueaderos(id),
-    fecha_ingreso TIMESTAMP NOT NULL
+    fecha_ingreso TIMESTAMP NOT NULL,
+    fecha_salida TIMESTAMP,
 );
 
 CREATE TABLE EmailsEnviados (
@@ -60,3 +68,7 @@ CREATE TABLE EntradasVehiculo (
     placa VARCHAR(20) UNIQUE,
     cantidad_entradas INT DEFAULT 0
 );
+
+--Registras los roles 
+
+INSERT INTO Roles (name) VALUES ('ADMIN'), ('SOCIO') ON CONFLICT (name) DO NOTHING;
