@@ -5,7 +5,8 @@ import {
     socioParqueaderoRepository,
     ExistParqueaderoRepository,
     editarParqueaderoRepository,
-    eliminarParqueaderoRerpository
+    eliminarParqueaderoRerpository,
+    puedeEliminarRepository
 } from "../repository/parqueaderoRepository.js";
 import {Respuesta} from './Entity/response.Entity.js'
 
@@ -39,7 +40,10 @@ export const buscarParqueaderosServices = async(nombre)=> {
 }
 
 export const editarParqueaderoServices = async (parqueaderoEntity,id) => {
-
+    const uso=await puedeEliminarRepository(id);
+    if(uso){
+        return new Respuesta(401,"Parqueadero en uso",null ) 
+    }
     const existParqueadero= await ExistParqueaderoRepository(id)
     if(!existParqueadero){
           return new Respuesta(401,"El parqueadero no existe",null )  
@@ -62,6 +66,10 @@ export const editarParqueaderoServices = async (parqueaderoEntity,id) => {
 };
 
 export const eliminarParqueaderoServices = async (id) => {
+    const uso=await puedeEliminarRepository(id);
+    if(uso){
+        return new Respuesta(401,"Parqueadero en uso",null ) 
+    }
     const existParqueadero= await ExistParqueaderoRepository(id)
     if(!existParqueadero){
           return new Respuesta(401,"El parqueadero no existe",null )  

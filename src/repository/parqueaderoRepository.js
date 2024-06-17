@@ -113,6 +113,24 @@ export const ExistParqueaderoRepository= async(id)=>{
     }
 }
 
+export const puedeEliminarRepository = async(id)=>{
+    const query = `
+        SELECT  placa
+        FROM IngresosVehiculos 
+        WHERE  parqueadero_id = $1
+        AND fecha_salida IS NULL;
+    `;
+    const idParqueadero = [id];
+    
+    const { rows:parqueaderoUsado  } = await pool.query(query, idParqueadero);
+    if(parqueaderoUsado.length>0){
+        return true
+    }else{
+        return false
+    }
+
+}
+
 
 export const eliminarParqueaderoRerpository = async (id) => {
         try{
