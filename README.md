@@ -6,3 +6,4 @@
 # Cree una opción de más para registrar admin solo se registra y ya no se necesita token ni nada 
 # los :id son el id del parqueadero
 # arranca el proyecto con npm run dev
+# No se puede eliminar ni actualizar el parqueadero si tiene vehiculo dentro 
