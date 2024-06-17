@@ -49,3 +49,13 @@ export const timeSchema = z.object({
         message: "El tiempo debe ser como máximo 4"
     })
 });
+
+export const vehiculoShema = z.object({
+    placa: z.string({
+        required_error: "El vehiculo es requerido"
+    }).min(6, {
+        message: "minimo debe tener 6 letras o numeros "
+    }).max(6,{
+        message: "Maximo debe tener 6 letras o numeros "
+    })
+});

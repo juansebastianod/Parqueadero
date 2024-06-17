@@ -1,7 +1,5 @@
 import { pool } from "../db.js";
 
-
-
 export const gananciasRepository = async (dateCondition,parqueaderoId,time) => {
     try {
         const query = `
@@ -38,8 +36,6 @@ export const buscarVehiculoPorCoincidenciaRepository = async (parqueaderoId,plac
               AND iv.fecha_salida IS NULL
         `;
         const { rows } = await pool.query(query, [`${placa}%`, parqueaderoId]);
-
-        console.log(rows)
         if (rows.length === 0) {
             const objeto={
                 verdad:false,

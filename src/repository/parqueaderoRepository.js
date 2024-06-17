@@ -115,8 +115,6 @@ export const ExistParqueaderoRepository= async(id)=>{
 
 
 export const eliminarParqueaderoRerpository = async (id) => {
-    
-    console.log(id)
         try{
         const deleteQuery = `
             DELETE FROM Parqueaderos
