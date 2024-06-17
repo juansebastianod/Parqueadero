@@ -1,8 +1,21 @@
 
-import {gananciasRepository} from '../repository/indicadoresRepository.js'
+import { response } from 'express'
+import {
+    gananciasRepository,
+    buscarVehiculoPorCoincidenciaRepository,
+    obtenerTopVehiculosRegistradosRepository,
+    obtenerVehiculosMasRegistradosRepository,
+    primeraVezParqueaderoRepository,
+    listVehiculosPrimeraVez
+} from '../repository/indicadoresRepository.js'
+import {verificarSocioParqueadero} from '../repository/sociosRepository.js'
 import {Respuesta} from './Entity/response.Entity.js'
 
-export const gananciasServices = async (time,parqueaderoId) => {
+export const gananciasServices = async (time,parqueaderoId,socioId,role) => {
+    const socio= await verificarSocioParqueadero(socioId,parqueaderoId,role)
+    if (!socio) {
+          return new Respuesta(401, "No tienes permisos para revisar los vehiculos de este parqueadero",null )
+          }
     let dateCondition;
     switch (time) {
         case 1: // Hoy
@@ -24,6 +37,44 @@ export const gananciasServices = async (time,parqueaderoId) => {
     console.log(reponse)
     
     return new Respuesta(200, "Ganancias del parqueadero en el periodo ",reponse )    
+
+
+}
+
+export const buscarVehiculoPorCoincidenciaServices = async (parqueaderoId,placa,socioId,role) => {
+   const socio= await verificarSocioParqueadero(socioId,parqueaderoId,role)
+   if (!socio) {
+         return new Respuesta(401, "No tienes permisos para revisar los vehiculos de este parqueadero",null )
+         }
+    const response = await buscarVehiculoPorCoincidenciaRepository(parqueaderoId,placa)
+    if(!response.verdad){
+        return new Respuesta(201, "No tiene ninguna concidencia",null )    
+    }
+    return new Respuesta(201, "Lista de vehiculo por cocidencia",response.found ) 
+}
+export const obtenerTopVehiculosRegistradosServices = async()=>{
+
+    const response= await obtenerTopVehiculosRegistradosRepository()
+    return new Respuesta(200, "Vehiculos mas parqueado ",response )   
+
+}
+
+export const obtenerVehiculosMasRegistradosServices = async (parqueaderoId,socioId,role) => {
+   const socio= await verificarSocioParqueadero(socioId,parqueaderoId,role)
+   if (!socio) {
+         return new Respuesta(401, "No tienes permisos para revisar los vehiculos de este parqueadero",null )
+         }
+
+  const response = await obtenerVehiculosMasRegistradosRepository(parqueaderoId);
+  return new Respuesta(201, "Lista de vehiculos que mas han entrado a un parqueadero",response )
+
+}
+
+export const primeraVezParqueaderoServices =async(parqueaderoId)=>{
+
+    const lista= await listVehiculosPrimeraVez(parqueaderoId)
+    const response = await  primeraVezParqueaderoRepository(parqueaderoId,lista)
+    return new Respuesta(201, "Carros que entran por primera vez",response )
 
 
 }

@@ -169,8 +169,6 @@ const actualizarDatosSalida = async(datos,parqueaderoId,fechaIngreso,vehiculosEn
 
 }
 
-
-
 export const registrarIngresoVehiculoRepository = async (vehiculoId,placa,parqueaderoId) => {
     try {
 
