@@ -134,8 +134,8 @@ export const email= async(req,res)=>{
 const { email,placa,mensaje,parqueaderoNombre} = req.body
 const asunto= placa+" entrando al parqueadero "+parqueaderoNombre
 const newEmial= new Email(email,asunto,mensaje)
-const response=enviarEmailServices(newEmial);
-res.json({
+const response=await enviarEmailServices(newEmial);
+res.status(response.status).json({
     message:response.message,
     data:response.data,
 });

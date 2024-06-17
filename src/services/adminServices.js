@@ -42,6 +42,11 @@ export const loginServices = async (email, password) => {
 
 export const enviarEmailServices=async(email)=>{
     const url ="http://localhost:3001/sendEmail"
-     const response=enviarEmail(url,email);
-     return new Respuesta(200, "Solicitud procesada",response )
+     const response=await enviarEmail(url,email);
+     if(response){
+        return new Respuesta(200, "Solicitud procesada",response )
+     }else{
+        return new Respuesta(400, "Hubo un erro al llamar a la peticion",response )
+     }
+     
 }
