@@ -29,16 +29,17 @@ export const gananciasRepository = async (dateCondition,parqueaderoId,time) => {
 
 export const buscarVehiculoPorCoincidenciaRepository = async (parqueaderoId,placa) => {
     try {
-
         const query = `
             SELECT *
             FROM Vehiculos v
-            INNER JOIN IngresosVehiculos iv ON v.id = iv.vehiculo_id
+            INNER JOIN IngresosVehiculos iv ON v.placa = iv.placa
             WHERE v.placa ILIKE $1
               AND iv.parqueadero_id = $2
               AND iv.fecha_salida IS NULL
         `;
         const { rows } = await pool.query(query, [`${placa}%`, parqueaderoId]);
+
+        console.log(rows)
         if (rows.length === 0) {
             const objeto={
                 verdad:false,
@@ -53,7 +54,7 @@ export const buscarVehiculoPorCoincidenciaRepository = async (parqueaderoId,plac
         return objeto;
     } catch (error) {
         console.error('Error al buscar vehículo por coincidencia:', error.message);
-        return res.status(500).json({ message: 'Error interno al buscar vehículo por coincidencia' });
+        return false;
     }
 };
 
@@ -76,12 +77,12 @@ export const obtenerTopVehiculosRegistradosRepository = async () => {
 export const obtenerVehiculosMasRegistradosRepository = async (parqueaderoId) => {
     try {
         const query = `
-        SELECT ep.vehiculo_id, v.placa, ep.cantidad_entradas
+        SELECT v.placa, ep.cantidad_entradas
         FROM EntradasParqueadero ep
-        JOIN Vehiculos v ON ep.vehiculo_id = v.id
+        JOIN Vehiculos v ON ep.placa = v.placa
         WHERE ep.parqueadero_id = $1
         ORDER BY ep.cantidad_entradas DESC
-        LIMIT 10
+        LIMIT 10;
     `;
         const { rows } = await pool.query(query, [parqueaderoId]);
         return rows
@@ -92,15 +93,15 @@ export const obtenerVehiculosMasRegistradosRepository = async (parqueaderoId) =>
 
 export const listVehiculosPrimeraVez=async(parqueaderoId)=>{
     const primeraVezParqueaderoQuery = `
-    SELECT vehiculo_id, cantidad_entradas
-    FROM EntradasParqueadero
-    WHERE parqueadero_id = $1
-    ORDER BY cantidad_entradas DESC
+        SELECT v.placa, ep.cantidad_entradas
+        FROM EntradasParqueadero ep
+        JOIN Vehiculos v ON ep.placa = v.placa
+        WHERE ep.parqueadero_id = $1
+        ORDER BY ep.cantidad_entradas DESC;
     `;
         const { rows: vehiculos } = await pool.query(primeraVezParqueaderoQuery, [parqueaderoId]);
-
     // Crear una lista de vehículos que ingresan por primera vez
-    const vehiculosPrimeraVez = vehiculos.filter(v => v.cantidad_entradas === 1).map(v => v.vehiculo_id);
+    const vehiculosPrimeraVez = vehiculos.filter(v => v.cantidad_entradas === 1).map(v => v.placa);
     return vehiculosPrimeraVez
 }
 
@@ -108,9 +109,9 @@ export const primeraVezParqueaderoRepository = async (parqueaderoId,vehiculosPri
     try {
         // Consulta para obtener las placas de los vehículos que ingresan por primera vez
         const placasQuery = `
-            SELECT id, placa
+            SELECT  placa
             FROM Vehiculos
-            WHERE id = ANY($1::int[])
+            WHERE placa = ANY($1::text[])
         `;
         const { rows: placas } = await pool.query(placasQuery, [vehiculosPrimeraVez]);
          const objeto={

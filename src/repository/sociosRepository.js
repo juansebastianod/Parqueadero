@@ -37,24 +37,24 @@ export const cantidadParqueadero = async (parqueaderoId) => {
 // crear vehiculo si el vehículo ya está registrado Terminado
 export const crearVehiculo = async (placa) => {
     const verificarVehiculoQuery = `
-    SELECT id FROM Vehiculos WHERE placa = $1
+    SELECT placa FROM Vehiculos WHERE placa = $1
     `;
     const verificarVehiculoValues = [placa];
     const { rows: vehiculosEncontrados } = await pool.query(verificarVehiculoQuery, verificarVehiculoValues);
 
     let vehiculoId;
     if (vehiculosEncontrados.length > 0) {
-        vehiculoId = vehiculosEncontrados[0].id;
+        vehiculoId = vehiculosEncontrados[0].placa;
         return vehiculoId
     } else {
         const insertarVehiculoQuery = `
         INSERT INTO Vehiculos (placa)
         VALUES ($1)
-        RETURNING id
+        RETURNING placa
     `;
         const insertarVehiculoValues = [placa];
         const { rows: nuevoVehiculoRows } = await pool.query(insertarVehiculoQuery, insertarVehiculoValues);
-        vehiculoId = nuevoVehiculoRows[0].id;
+        vehiculoId = nuevoVehiculoRows[0].placa;
         return vehiculoId
     }
 
@@ -64,7 +64,7 @@ export const verificarPlacaParqueadero = async (vehiculoId) => {
     const verificarVehiculoQuery = `
         SELECT iv.id 
         FROM IngresosVehiculos iv 
-        WHERE iv.vehiculo_id = $1 AND iv.fecha_salida IS NULL
+        WHERE iv.placa = $1 AND iv.fecha_salida IS NULL
     `;
     const { rows: vehiculoEnOtroParqueadero } = await pool.query(verificarVehiculoQuery, [vehiculoId]);
     if(vehiculoEnOtroParqueadero.length > 0){
@@ -73,9 +73,9 @@ export const verificarPlacaParqueadero = async (vehiculoId) => {
     return true;
     }
 }
-
+ 
 //Actualiza los datos de las diferentes tablas ya sea la cantidad el numero de entrada etc
-const actualizarEntradas = async (parqueaderoId, vehiculoId, placa) => {
+const actualizarEntradas = async (parqueaderoId, vehiculoId) => {
     // Disminuir la capacidad del parqueadero
     const disminuirCapacidadQuery = `
      UPDATE Parqueaderos SET capacidad = capacidad - 1 WHERE id = $1
@@ -85,9 +85,10 @@ const actualizarEntradas = async (parqueaderoId, vehiculoId, placa) => {
 
     // Actualizar la tabla EntradasParqueadero
     const actualizarEntradasParqueaderoQuery = `
-        INSERT INTO EntradasParqueadero (parqueadero_id, vehiculo_id, cantidad_entradas)
+       INSERT INTO EntradasParqueadero (parqueadero_id, placa, cantidad_entradas)
         VALUES ($1, $2, 1)
-        ON CONFLICT (parqueadero_id, vehiculo_id) DO UPDATE SET cantidad_entradas = EntradasParqueadero.cantidad_entradas + 1
+        ON CONFLICT (parqueadero_id, placa) DO UPDATE 
+        SET cantidad_entradas = EntradasParqueadero.cantidad_entradas + 1
     `;
     await pool.query(actualizarEntradasParqueaderoQuery, [parqueaderoId, vehiculoId]);
 
@@ -95,9 +96,11 @@ const actualizarEntradas = async (parqueaderoId, vehiculoId, placa) => {
     const actualizarEntradasVehiculoQuery = `
         INSERT INTO EntradasVehiculo (placa, cantidad_entradas)
         VALUES ($1, 1)
-        ON CONFLICT (placa) DO UPDATE SET cantidad_entradas = EntradasVehiculo.cantidad_entradas + 1
+        ON CONFLICT (placa) DO UPDATE
+        SET cantidad_entradas = EntradasVehiculo.cantidad_entradas + 1
+        RETURNING cantidad_entradas;
     `;
-    await pool.query(actualizarEntradasVehiculoQuery, [placa]);
+    await pool.query(actualizarEntradasVehiculoQuery, [vehiculoId]);
 
 }
 
@@ -108,10 +111,12 @@ const actualizarEntradas = async (parqueaderoId, vehiculoId, placa) => {
 export const vehiculoSalidaParqueado = async (placa, parqueaderoId) => {
 
     const verificarVehiculoQuery = `
-        SELECT iv.id AS ingreso_id, v.id AS vehiculo_id, iv.fecha_ingreso
-        FROM Vehiculos v
-        JOIN IngresosVehiculos iv ON v.id = iv.vehiculo_id
-        WHERE v.placa = $1 AND iv.parqueadero_id = $2 AND iv.fecha_salida IS NULL
+        SELECT iv.id AS ingreso_id, v.placa, iv.fecha_ingreso
+        FROM IngresosVehiculos iv
+        JOIN Vehiculos v ON v.placa = iv.placa
+        WHERE v.placa = $1
+        AND iv.parqueadero_id = $2
+        AND iv.fecha_salida IS NULL;
     `;
     const verificarVehiculoValues = [placa, parqueaderoId];
     const { rows:vehiculosEncontrados  } = await pool.query(verificarVehiculoQuery, verificarVehiculoValues);
@@ -155,10 +160,10 @@ const actualizarDatosSalida = async(datos,parqueaderoId,fechaIngreso,vehiculosEn
 
     // Insertar el registro en la tabla HistorialVehiculos
     const insertarHistorialQuery = `
-        INSERT INTO HistorialVehiculos (vehiculo_id, parqueadero_id, fecha_ingreso, fecha_salida, pago)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO HistorialVehiculos ( parqueadero_id, fecha_ingreso, fecha_salida, pago)
+        VALUES ($1, $2, $3, $4)
     `;
-    const insertarHistorialValues = [vehiculosEncontrados.found[0].vehiculo_id, parqueaderoId, fechaIngreso, fecha_salida, ganancias];
+    const insertarHistorialValues = [ parqueaderoId, fechaIngreso, fecha_salida, ganancias];
     await pool.query(insertarHistorialQuery, insertarHistorialValues);
 
     // Aumentar la capacidad del parqueadero
@@ -169,17 +174,16 @@ const actualizarDatosSalida = async(datos,parqueaderoId,fechaIngreso,vehiculosEn
 
 }
 
-export const registrarIngresoVehiculoRepository = async (vehiculoId,placa,parqueaderoId) => {
+export const registrarIngresoVehiculoRepository = async (vehiculoId,parqueaderoId) => {
     try {
-
         const registrarIngresoQuery = `
-            INSERT INTO IngresosVehiculos (vehiculo_id, parqueadero_id, fecha_ingreso)
+            INSERT INTO IngresosVehiculos (placa, parqueadero_id, fecha_ingreso)
             VALUES ($1, $2, NOW())
             RETURNING id
         `;
         const registrarIngresoValues = [vehiculoId, parqueaderoId];
         const { rows: ingresoVehiculoRows } = await pool.query(registrarIngresoQuery, registrarIngresoValues);
-        await actualizarEntradas(parqueaderoId, vehiculoId, placa)
+        await actualizarEntradas(parqueaderoId, vehiculoId)
         if(ingresoVehiculoRows.length>0){
             return true 
         }
@@ -244,10 +248,11 @@ export const listParqueaderoRepository = async (socioId) => {
 export const detalleVehiculoRepository = async (parqueaderoId) => {
     try {
         const query = `
-            SELECT v.id, v.placa, iv.fecha_ingreso
+            SELECT  v.placa, iv.fecha_ingreso
             FROM Vehiculos v
-            INNER JOIN IngresosVehiculos iv ON v.id = iv.vehiculo_id
-            WHERE iv.parqueadero_id = $1 AND iv.fecha_salida IS NULL 
+            INNER JOIN IngresosVehiculos iv ON v.placa = iv.placa
+            WHERE iv.parqueadero_id = $1 
+            AND iv.fecha_salida IS NULL;
         `;
         const { rows } = await pool.query(query, [parqueaderoId]);   
         if (rows.length === 0) {
@@ -264,6 +269,6 @@ export const detalleVehiculoRepository = async (parqueaderoId) => {
        return objeto
     } catch (error) {
         console.error('Error al obtener detalles de vehículos:', error.message);
-        return res.status(500).json({ message: 'Error interno al obtener detalles de vehículos' });
+        return false;
     }
 };

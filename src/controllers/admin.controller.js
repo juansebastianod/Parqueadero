@@ -38,6 +38,7 @@ export const register = async(req,res)=> {
 export const registerAdmin = async(req,res)=> {
     const {password,email}=req.body
     const roleId = 1;
+    console.log(req.body)
     try {
         const passwordHast =await bcrypt.hash(password,10)
         const query = `

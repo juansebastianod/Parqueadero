@@ -1,5 +1,3 @@
-
-import { response } from 'express'
 import {
     gananciasRepository,
     buscarVehiculoPorCoincidenciaRepository,
@@ -34,8 +32,7 @@ export const gananciasServices = async (time,parqueaderoId,socioId,role) => {
             return new Respuesta(401, "Tienes que escojer un valor del 1 al 4 ",null )          
     }
     const reponse = await gananciasRepository(dateCondition,parqueaderoId,time);
-    console.log(reponse)
-    
+
     return new Respuesta(200, "Ganancias del parqueadero en el periodo ",reponse )    
 
 

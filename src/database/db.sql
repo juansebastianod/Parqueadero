@@ -25,39 +25,38 @@ CREATE TABLE Parqueaderos (
 );
 
 CREATE TABLE Vehiculos (
-    id SERIAL PRIMARY KEY,
-    placa VARCHAR(6) UNIQUE NOT NULL
+    placa VARCHAR(6) PRIMARY KEY
 );
 
 CREATE TABLE HistorialVehiculos (
     id SERIAL PRIMARY KEY,
-    vehiculo_id INT REFERENCES Vehiculos(id),
     parqueadero_id INT REFERENCES Parqueaderos(id),
     fecha_ingreso TIMESTAMP NOT NULL,
     fecha_salida TIMESTAMP,
     pago DECIMAL(10, 2) DEFAULT 0
 );
 
+-- Crear la tabla IngresosVehiculos
 CREATE TABLE IngresosVehiculos (
     id SERIAL PRIMARY KEY,
-    vehiculo_id INT REFERENCES Vehiculos(id),
+    placa VARCHAR(6) REFERENCES Vehiculos(placa),
     parqueadero_id INT REFERENCES Parqueaderos(id),
     fecha_ingreso TIMESTAMP NOT NULL,
-    fecha_salida TIMESTAMP,
+    fecha_salida TIMESTAMP
 );
 
-
+-- Crear la tabla EntradasParqueadero
 CREATE TABLE EntradasParqueadero (
     id SERIAL PRIMARY KEY,
-    vehiculo_id INT REFERENCES Vehiculos(id),
+    placa VARCHAR(6) REFERENCES Vehiculos(placa),
     parqueadero_id INT REFERENCES Parqueaderos(id),
     cantidad_entradas INT DEFAULT 0,
-    UNIQUE (parqueadero_id, vehiculo_id)
+    UNIQUE (parqueadero_id, placa)
 );
 
 CREATE TABLE EntradasVehiculo (
     id SERIAL PRIMARY KEY,
-    placa VARCHAR(20) UNIQUE,
+    placa VARCHAR(6) UNIQUE REFERENCES Vehiculos(placa),
     cantidad_entradas INT DEFAULT 0
 );
 

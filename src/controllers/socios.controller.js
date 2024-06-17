@@ -1,12 +1,9 @@
-import { pool } from "../db.js";
 import {
     registrarIngresoVehiculoServices,
     registrarSalidaVehiculoServices,
     listadoParqueaderoServices,
     detalleVehiculoServices
 } from '../services/sociosSevices.js'
-import {IngresoVehiculo} from '../services/Entity/ingresoVehiculosEntity.js'
-import { response } from "express";
 
 export const registrarIngresoVehiculo = async (req, res) => {
     const { placa} = req.body;

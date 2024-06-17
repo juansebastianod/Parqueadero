@@ -11,7 +11,6 @@ import {
     detalleVehiculoRepository
 
  } from '../repository/sociosRepository.js'
-import { response } from 'express'
 
  export const registrarIngresoVehiculoServices =async(placa,socioId,parqueaderoId,role)=>{
 
@@ -30,7 +29,7 @@ import { response } from 'express'
       return new Respuesta(401, "Ya existe este vehiculo en este o otro parqueadero",null )
    }
 
-   const response = await registrarIngresoVehiculoRepository(vehiculoId,placa,parqueaderoId)
+   const response = await registrarIngresoVehiculoRepository(vehiculoId,parqueaderoId)
    if(response){
       return new Respuesta(201, "Veiculo Ingresado",null )
    }
