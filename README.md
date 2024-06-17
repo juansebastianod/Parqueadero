@@ -7,3 +7,4 @@
 # los :id son el id del parqueadero
 # arranca el proyecto con npm run dev
 # No se puede eliminar ni actualizar el parqueadero si tiene vehiculo dentro 
+# por favor dentro de la conexion a la base de datos que se encuentra dentro de src en el archivo db.js cambiar el user password y si es necesario el puerto por favor
