@@ -46,14 +46,6 @@ CREATE TABLE IngresosVehiculos (
     fecha_salida TIMESTAMP,
 );
 
-CREATE TABLE EmailsEnviados (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL,
-    placa VARCHAR(6) NOT NULL,
-    mensaje TEXT NOT NULL,
-    parqueadero_nombre VARCHAR(255) NOT NULL,
-    fecha_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 CREATE TABLE EntradasParqueadero (
     id SERIAL PRIMARY KEY,

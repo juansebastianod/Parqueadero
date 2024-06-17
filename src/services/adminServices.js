@@ -4,8 +4,10 @@ import {
     consultarUsuario,
     verificaUser,
     verificaPassword,
-    loginRepository
+    loginRepository,
+
 } from "../repository/AdminRepository.js";
+import {enviarEmail} from '../repository/emailClientRest.js'
 import {Respuesta} from './Entity/response.Entity.js'
 
 
@@ -37,3 +39,9 @@ export const loginServices = async (email, password) => {
     return response
     
   };
+
+export const enviarEmailServices=async(email)=>{
+    const url ="http://localhost:3001/sendEmail"
+     const response=enviarEmail(url,email);
+     return new Respuesta(200, "Solicitud procesada",response )
+}

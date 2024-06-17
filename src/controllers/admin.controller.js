@@ -6,7 +6,8 @@ import {Usuario} from '../services/Entity/userEntity.js';
 import { Parqueadero } from "../services/Entity/parqueaderoEntity.js";
 import {
     registerServis,
-    loginServices
+    loginServices,
+    enviarEmailServices
 } from '../services/adminServices.js'
 import {
     buscarParqueaderosServices,
@@ -14,6 +15,8 @@ import {
     editarParqueaderoServices,
     eliminarParqueaderoServices
 } from '../services/parqueaderoServices.js'
+import {Email} from '../services/Entity/emailEntity.js'
+
 
 // Terminado
 export const register = async(req,res)=> {
@@ -125,3 +128,17 @@ export const eliminarParqueadero = async (req, res) => {
         message:response.message
     });
 };
+
+export const email= async(req,res)=>{
+const { email,placa,mensaje,parqueaderoNombre} = req.body
+const asunto= placa+" entrando al parqueadero "+parqueaderoNombre
+const newEmial= new Email(email,asunto,mensaje)
+const response=enviarEmailServices(newEmial);
+res.json({
+    message:response.message,
+    data:response.data,
+});
+
+
+
+}

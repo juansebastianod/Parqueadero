@@ -14,7 +14,7 @@ import {
 } from '../shemas/adminSchema.js'
 
 const router =Router();
-
+//los :id son el id del parqueadero
 router.get('/ganancias/:id',authRequired,authorizeUser,validateShema(timeSchema),ganancias);
 router.get('/buscar_vehiculo/:id',authRequired,buscarVehiculoPorCoincidencia);
 router.get('/top_vehiculos',authRequired,obtenerTopVehiculosRegistrados);
