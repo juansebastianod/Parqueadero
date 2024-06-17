@@ -49,7 +49,6 @@ export const NombreParqueaderoRepository = async(nombre)=> {
     `;
     const values = [nombre];
     const { rows } = await pool.query(query, values);
-    console.log(rows.length)
     if (rows.length > 0) {
        return true;
     } else {
@@ -65,12 +64,72 @@ export const socioParqueaderoRepository = async(socio_id)=> {
     `;
     const values = [socio_id];
     const { rows } = await pool.query(query, values);
-
-    console.log(rows)
     if (rows.length > 0) {
        return true;
     } else {
       return false
     }
 }
+
+
+export const editarParqueaderoRepository = async (parqueaderoEntity,id) => {
+
+    try {
+        const updateQuery = `
+            UPDATE Parqueaderos
+            SET nombre = $1, capacidad = $2, costo_hora = $3, socio_id = $4
+            WHERE id = $5
+            RETURNING *
+        `;
+        const updateValues = [parqueaderoEntity.nombre, parqueaderoEntity.capacidad, parqueaderoEntity.costo_hora, parqueaderoEntity.socio_id, id];
+
+        const { rows: parqueaderoActualizado } = await pool.query(updateQuery, updateValues);
+
+        // Enviar respuesta con el parqueadero actualizado
+
+        if(parqueaderoActualizado.length===0){
+            return true
+        }else{
+            return false
+        }
+       
+    } catch (error) {
+        console.error("Error al editar parqueadero:", error.message);
+    }
+};
+
+export const ExistParqueaderoRepository= async(id)=>{
+
+    const verificarQuery = `
+    SELECT * FROM Parqueaderos WHERE id = $1
+    `;
+    const verificarValues = [id];
+    const { rows } = await pool.query(verificarQuery, verificarValues);
+  
+    if (rows.length === 0) {
+        return false;
+    }else{
+        return true
+    }
+}
+
+
+export const eliminarParqueaderoRerpository = async (id) => {
+    
+    console.log(id)
+        try{
+        const deleteQuery = `
+            DELETE FROM Parqueaderos
+            WHERE id = $1
+        `;
+        const deleteValues = [id];
+
+        await pool.query(deleteQuery, deleteValues);
+        return true
+    } catch (error) {
+        return false
+    }
+};
+
+
 

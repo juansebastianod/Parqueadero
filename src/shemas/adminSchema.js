@@ -33,3 +33,19 @@ export const RegistrarParqueaderoShema = z.object({
         message: "El socio_id debe ser un número entero"
     })
 });
+
+
+export const nombreSchema = z.object({
+    nombre: z.string().optional().or(z.literal('')),
+});
+
+
+export const timeSchema = z.object({
+    time: z.number({
+        required_error: "El tiempo es requerido"
+    }).min(1, {
+        message: "El tiempo debe ser al menos 1"
+    }).max(4, {
+        message: "El tiempo debe ser como máximo 4"
+    })
+});

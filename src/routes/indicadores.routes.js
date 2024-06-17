@@ -8,10 +8,14 @@ import {
     obtenerVehiculosMasRegistrados,
     primeraVezParqueadero
 } from '../controllers/indicadores.controller.js';
+import {validateShema} from '../middlewares/validator.midleware.js'
+import {
+    timeSchema
+} from '../shemas/adminSchema.js'
 
 const router =Router();
 
-router.get('/ganancias/:id/:time',authRequired,authorizeUser,ganancias);
+router.get('/ganancias/:id',authRequired,authorizeUser,validateShema(timeSchema),ganancias);
 router.get('/buscar_vehiculo/:id',authRequired,buscarVehiculoPorCoincidencia);
 router.get('/top_vehiculos',authRequired,obtenerTopVehiculosRegistrados);
 router.get('/mas_vehiculos/:id',authRequired,obtenerVehiculosMasRegistrados);
